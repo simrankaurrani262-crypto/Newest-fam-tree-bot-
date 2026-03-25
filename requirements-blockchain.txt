@@ -1,0 +1,21 @@
+# Ethereum
+web3==6.15.1
+eth-account==0.11.0
+
+# Solana
+solana==0.32.0
+solders==0.21.0
+
+# Bitcoin
+bit==0.8.0
+
+# General Crypto
+pycryptodome==3.20.0
+coinbase==2.1.0
+
+# NFT
+opensea-py==0.1.6
+
+# Smart Contract Testing
+brownie==1.19.3
+hardhat==2.20.1

@@ -1,0 +1,25 @@
+# Development Dependencies
+pytest==8.1.1
+pytest-asyncio==0.23.5
+pytest-cov==4.1.0
+pytest-mock==3.12.0
+factory-boy==3.3.0
+faker==24.2.0
+httpx==0.27.0
+
+# Code Quality
+black==24.2.0
+isort==5.13.2
+flake8==7.0.0
+pylint==3.1.0
+mypy==1.9.0
+bandit==1.7.8
+
+# Documentation
+sphinx==7.2.6
+sphinx-rtd-theme==2.0.0
+
+# Debugging
+ipython==8.22.2
+ipdb==0.13.13
+python-dotenv==1.0.1
