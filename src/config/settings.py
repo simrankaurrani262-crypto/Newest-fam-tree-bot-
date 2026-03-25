@@ -1,20 +1,22 @@
 """
 Main Settings Configuration
 """
+import os
 from functools import lru_cache
 from typing import List, Optional
-
 from pydantic_settings import BaseSettings, SettingsConfigDict
 from pydantic import Field
 
 
 class Settings(BaseSettings):
-    """Application settings"""
+    """Application settings with proper environment variable loading"""
     
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
-        extra="ignore"
+        extra="ignore",
+        env_prefix="",
+        case_sensitive=False
     )
     
     # Environment
@@ -28,16 +30,17 @@ class Settings(BaseSettings):
     BOT_NAME_ALPHA: str = Field(default="fam_tree_bot", alias="BOT_NAME_ALPHA")
     BOT_NAME_BETA: str = Field(default="famtreebbot", alias="BOT_NAME_BETA")
     
-    # Database
-    DATABASE_URL: str = Field(
-        default="postgresql+asyncpg://user:password@localhost:5432/famtreebot",
-        alias="DATABASE_URL"
-    )
+    # Database - Use environment variable first, fallback to constructed URL
+    DATABASE_URL: str = Field(default="", alias="DATABASE_URL")
     DB_HOST: str = Field(default="localhost", alias="DB_HOST")
     DB_PORT: int = Field(default=5432, alias="DB_PORT")
     DB_NAME: str = Field(default="famtreebot", alias="DB_NAME")
     DB_USER: str = Field(default="famtree_user", alias="DB_USER")
     DB_PASSWORD: str = Field(default="", alias="DB_PASSWORD")
+    
+    # Database SSL (required for Render PostgreSQL)
+    DB_SSL_MODE: str = Field(default="require", alias="DB_SSL_MODE")
+    DB_SSL_ROOT_CERT: Optional[str] = Field(default=None, alias="DB_SSL_ROOT_CERT")
     
     # Redis
     REDIS_URL: str = Field(default="redis://localhost:6379/0", alias="REDIS_URL")
@@ -47,14 +50,8 @@ class Settings(BaseSettings):
     REDIS_PASSWORD: Optional[str] = Field(default=None, alias="REDIS_PASSWORD")
     
     # Celery
-    CELERY_BROKER_URL: str = Field(
-        default="redis://localhost:6379/1",
-        alias="CELERY_BROKER_URL"
-    )
-    CELERY_RESULT_BACKEND: str = Field(
-        default="redis://localhost:6379/2",
-        alias="CELERY_RESULT_BACKEND"
-    )
+    CELERY_BROKER_URL: str = Field(default="redis://localhost:6379/1", alias="CELERY_BROKER_URL")
+    CELERY_RESULT_BACKEND: str = Field(default="redis://localhost:6379/2", alias="CELERY_RESULT_BACKEND")
     CELERY_WORKER_CONCURRENCY: int = Field(default=4, alias="CELERY_WORKER_CONCURRENCY")
     
     # Webhook
@@ -62,64 +59,52 @@ class Settings(BaseSettings):
     WEBHOOK_PATH: str = Field(default="/webhook", alias="WEBHOOK_PATH")
     WEBHOOK_PORT: int = Field(default=8443, alias="WEBHOOK_PORT")
     WEBHOOK_SECRET: str = Field(default="", alias="WEBHOOK_SECRET")
-    WEBHOOK_ENABLED: bool = Field(default=False, alias="WEBHOOK_ENABLED")
     
     # AI/ML
-    OPENAI_API_KEY: Optional[str] = Field(default=None, alias="OPENAI_API_KEY")
-    HUGGINGFACE_API_KEY: Optional[str] = Field(default=None, alias="HUGGINGFACE_API_KEY")
+    OPENAI_API_KEY: str = Field(default="", alias="OPENAI_API_KEY")
+    HUGGINGFACE_API_KEY: str = Field(default="", alias="HUGGINGFACE_API_KEY")
     AI_ENABLED: bool = Field(default=False, alias="AI_ENABLED")
     
     # Blockchain
-    ETHEREUM_RPC_URL: Optional[str] = Field(default=None, alias="ETHEREUM_RPC_URL")
-    POLYGON_RPC_URL: Optional[str] = Field(default=None, alias="POLYGON_RPC_URL")
-    SOLANA_RPC_URL: Optional[str] = Field(default=None, alias="SOLANA_RPC_URL")
+    ETHEREUM_RPC_URL: str = Field(default="", alias="ETHEREUM_RPC_URL")
+    POLYGON_RPC_URL: str = Field(default="", alias="POLYGON_RPC_URL")
+    SOLANA_RPC_URL: str = Field(default="", alias="SOLANA_RPC_URL")
     BLOCKCHAIN_ENABLED: bool = Field(default=False, alias="BLOCKCHAIN_ENABLED")
+    NFT_CONTRACT_ETH: str = Field(default="", alias="NFT_CONTRACT_ETH")
+    NFT_CONTRACT_POLYGON: str = Field(default="", alias="NFT_CONTRACT_POLYGON")
     
-    # Security
-    SECRET_KEY: str = Field(default="change-me", alias="SECRET_KEY")
-    ENCRYPTION_KEY: str = Field(default="change-me-32-chars-long-key", alias="ENCRYPTION_KEY")
-    JWT_SECRET: str = Field(default="change-me", alias="JWT_SECRET")
-    
-    # External APIs
-    WEATHER_API_KEY: Optional[str] = Field(default=None, alias="WEATHER_API_KEY")
-    NEWS_API_KEY: Optional[str] = Field(default=None, alias="NEWS_API_KEY")
-    IMGUR_CLIENT_ID: Optional[str] = Field(default=None, alias="IMGUR_CLIENT_ID")
-    
-    # Monitoring
-    SENTRY_DSN: Optional[str] = Field(default=None, alias="SENTRY_DSN")
-    PROMETHEUS_PORT: int = Field(default=9090, alias="PROMETHEUS_PORT")
-    
-    # Supported Languages
-    SUPPORTED_LANGUAGES: List[str] = Field(
-        default=["en", "ru", "fr", "es", "de", "zh", "it", "uk"],
-        alias="SUPPORTED_LANGUAGES"
-    )
-    DEFAULT_LANGUAGE: str = Field(default="en", alias="DEFAULT_LANGUAGE")
-    
-    # System Limits
-    MAX_FRIENDS: int = Field(default=100, alias="MAX_FRIENDS")
-    MAX_PARTNERS: int = Field(default=7, alias="MAX_PARTNERS")
-    MAX_CHILDREN: int = Field(default=8, alias="MAX_CHILDREN")
-    MAX_ROBBERY_PER_DAY: int = Field(default=8, alias="MAX_ROBBERY_PER_DAY")
-    MAX_KILLS_PER_DAY: int = Field(default=5, alias="MAX_KILLS_PER_DAY")
-    MAX_WORKERS: int = Field(default=5, alias="MAX_WORKERS")
-    GARDEN_START_SLOTS: int = Field(default=9, alias="GARDEN_START_SLOTS")
-    GARDEN_MAX_SLOTS: int = Field(default=12, alias="GARDEN_MAX_SLOTS")
-    BARN_SIZE: int = Field(default=500, alias="BARN_SIZE")
-    MAX_INSURANCE: int = Field(default=10, alias="MAX_INSURANCE")
-    
-    @property
-    def is_production(self) -> bool:
-        return self.ENVIRONMENT == "production"
-    
-    @property
-    def is_development(self) -> bool:
-        return self.ENVIRONMENT == "development"
+    def model_post_init(self, __context):
+        """Post-initialization to construct DATABASE_URL if not provided"""
+        super().model_post_init(__context)
+        
+        # If DATABASE_URL is not set, construct it from individual components
+        if not self.DATABASE_URL:
+            if self.DB_PASSWORD:
+                self.DATABASE_URL = (
+                    f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASSWORD}"
+                    f"@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
+                )
+            else:
+                # Fallback for local development
+                self.DATABASE_URL = (
+                    f"postgresql+asyncpg://{self.DB_USER}@{self.DB_HOST}"
+                    f":{self.DB_PORT}/{self.DB_NAME}"
+                )
+        
+        # Add SSL parameters for Render PostgreSQL if needed
+        if "render.com" in self.DATABASE_URL and "ssl" not in self.DATABASE_URL:
+            ssl_param = "?ssl=require"
+            if self.DB_SSL_ROOT_CERT:
+                ssl_param = f"?sslmode=verify-ca&sslrootcert={self.DB_SSL_ROOT_CERT}"
+            self.DATABASE_URL += ssl_param
 
 
 @lru_cache()
 def get_settings() -> Settings:
+    """Get cached settings instance"""
     return Settings()
 
 
+# Global settings instance
 settings = get_settings()
+    
