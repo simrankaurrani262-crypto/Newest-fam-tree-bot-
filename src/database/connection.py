@@ -73,8 +73,10 @@ async def init_database():
             )
             
             # Test connection
+            from sqlalchemy import text
+
             async with engine.connect() as conn:
-                result = await conn.execute("SELECT 1")
+                result = await conn.execute(text("SELECT 1"))
                 await result.fetchone()
             
             logger.info("Database connection test successful")
