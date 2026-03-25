@@ -6,7 +6,7 @@ from typing import Dict, Any, Optional
 from datetime import datetime, timedelta
 from enum import Enum
 
-import aioredis
+from redis import asyncio as aioredis
 
 from src.config.settings import settings
 
@@ -156,3 +156,4 @@ class StateManager:
 
 # Global state manager instance
 state_manager = StateManager()
+        
