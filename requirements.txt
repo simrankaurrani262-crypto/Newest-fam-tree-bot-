@@ -78,7 +78,7 @@ mypy==1.9.0
 bandit==1.7.8
 
 # Type Hints
-types-pytz==2024.1.0
+types-pytz==2024.1.0.20240417
 types-python-dateutil==2.8.19.20240311
 
 # Development
