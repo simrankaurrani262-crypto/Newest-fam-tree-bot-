@@ -44,7 +44,7 @@ plotly==5.19.0
 # Utilities
 python-dateutil==2.9.0
 pytz==2024.1
-cchardet==5.2.0
+charset-normalizer==3.3.2
 orjson==3.9.15
 
 # Logging
