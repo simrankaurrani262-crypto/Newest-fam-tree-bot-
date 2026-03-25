@@ -5,7 +5,7 @@ import logging
 from typing import Tuple
 from datetime import datetime, timedelta
 
-import aioredis
+from redis import asyncio as aioredis
 
 from src.config.settings import settings
 
@@ -100,3 +100,4 @@ class RateLimiter:
 
 # Global rate limiter instance
 rate_limiter = RateLimiter()
+                                             
