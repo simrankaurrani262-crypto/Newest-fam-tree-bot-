@@ -1,1 +1,1 @@
-
+"""Smart Contracts Module"""
