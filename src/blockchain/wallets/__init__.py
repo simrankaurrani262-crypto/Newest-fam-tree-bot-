@@ -1,1 +1,1 @@
-
+"""Wallet Management Module"""
