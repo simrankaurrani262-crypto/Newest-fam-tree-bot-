@@ -1,1 +1,1 @@
-
+"""Image Generation Module"""
