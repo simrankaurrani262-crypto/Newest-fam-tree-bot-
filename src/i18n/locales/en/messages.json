@@ -1,1 +1,76 @@
-
+{
+  "commands": {
+    "start": {
+      "welcome": "Welcome to Fam Tree Bot!",
+      "description": "Build your family, grow crops, and have fun!"
+    },
+    "help": {
+      "title": "Available Commands",
+      "family": "Family Commands",
+      "economy": "Economy Commands",
+      "garden": "Garden Commands",
+      "games": "Game Commands"
+    },
+    "account": {
+      "title": "Your Profile",
+      "balance": "Balance",
+      "bank": "Bank",
+      "reputation": "Reputation",
+      "health": "Health"
+    },
+    "errors": {
+      "not_found": "User not found!",
+      "insufficient_funds": "Insufficient funds!",
+      "limit_exceeded": "Daily limit exceeded!",
+      "already_exists": "Already exists!",
+      "not_related": "Not related!"
+    }
+  },
+  "family": {
+    "adopt": {
+      "request_sent": "Adoption request sent!",
+      "accepted": "Adoption accepted!",
+      "declined": "Adoption declined!",
+      "max_children": "Maximum children limit reached!"
+    },
+    "marry": {
+      "proposal_sent": "Marriage proposal sent!",
+      "accepted": "You are now married!",
+      "declined": "Proposal declined!",
+      "max_partners": "Maximum partners limit reached!"
+    },
+    "divorce": {
+      "success": "Divorced successfully!",
+      "not_married": "You are not married!"
+    }
+  },
+  "economy": {
+    "daily": {
+      "claimed": "Daily reward claimed!",
+      "already_claimed": "You already claimed today!",
+      "streak": "Day streak: {days}"
+    },
+    "rob": {
+      "success": "Robbery successful! Stole ${amount}",
+      "failed": "Robbery failed!",
+      "limit": "Robbery limit reached!"
+    },
+    "kill": {
+      "success": "Kill successful! Reward: ${amount}",
+      "failed": "Kill failed!",
+      "limit": "Kill limit reached!"
+    }
+  },
+  "garden": {
+    "planted": "Planted {crop} in plot {plot}!",
+    "harvested": "Harvested {amount}x {crop}!",
+    "not_ready": "Crop not ready yet!",
+    "no_seeds": "No seeds available!"
+  },
+  "games": {
+    "win": "Congratulations! You won!",
+    "lose": "Better luck next time!",
+    "correct": "Correct answer!",
+    "wrong": "Wrong answer!"
+  }
+}
