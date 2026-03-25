@@ -77,7 +77,7 @@ async def init_database():
 
             async with engine.connect() as conn:
                 result = await conn.execute(text("SELECT 1"))
-                await result.fetchone()
+                result.fetchone()
             
             logger.info("Database connection test successful")
             
@@ -129,7 +129,7 @@ async def check_database_health() -> bool:
         
         async with engine.connect() as conn:
             result = await conn.execute("SELECT 1")
-            await result.fetchone()
+            result.fetchone()
         return True
     except Exception as e:
         logger.error(f"Database health check failed: {e}")
