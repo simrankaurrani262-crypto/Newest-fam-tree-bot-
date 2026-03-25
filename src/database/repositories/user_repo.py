@@ -1,6 +1,7 @@
 """
 User Repository
 """
+from datetime import datetime
 from typing import Optional
 
 from sqlalchemy import select, update
@@ -42,7 +43,6 @@ class UserRepository(BaseRepository[User]):
     
     async def update_last_active(self, telegram_id: int):
         """Update user's last active timestamp"""
-        from datetime import datetime
         await self.session.execute(
             update(User)
             .where(User.telegram_id == telegram_id)
@@ -93,3 +93,4 @@ class UserRepository(BaseRepository[User]):
             .values(profile_pic_url=url)
         )
         await self.session.commit()
+        
