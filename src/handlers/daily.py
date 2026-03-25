@@ -8,7 +8,8 @@ from datetime import datetime, timedelta
 from aiogram import Router, types, F
 from aiogram.filters import Command
 
-from src.core.decorators import require_user, rate_limit, handle_errors, log_command
+from src.core.decorators import require_user, require_reply, rate_limit, handle_errors, log_command
+
 from src.services.economy_service import EconomyService
 from src.services.family_service import FamilyService
 from src.core.constants import GEMSTONES, GEMSTONE_FUSE_REWARD
