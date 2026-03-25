@@ -34,7 +34,7 @@ uvicorn==0.28.0
 
 # Image Processing
 pillow==10.2.0
-opencv-python==4.9.0.76
+opencv-python==4.8.1.78
 imageio==2.34.0
 
 # Charts & Visualization
