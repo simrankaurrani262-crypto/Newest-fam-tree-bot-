@@ -11,11 +11,13 @@ class DatabaseSettings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=".env",
         env_file_encoding="utf-8",
-        extra="ignore"
+        extra="ignore",
+        env_prefix="",
+        case_sensitive=False
     )
     
     # Connection Pool
-    POOL_SIZE: int = Field(default=20, alias="DB_POOL_SIZE")
+    POOL_SIZE: int = Field(default=5, alias="DB_POOL_SIZE")
     MAX_OVERFLOW: int = Field(default=10, alias="DB_MAX_OVERFLOW")
     POOL_TIMEOUT: int = Field(default=30, alias="DB_POOL_TIMEOUT")
     POOL_RECYCLE: int = Field(default=3600, alias="DB_POOL_RECYCLE")
@@ -25,6 +27,11 @@ class DatabaseSettings(BaseSettings):
     
     # Echo SQL (debug)
     ECHO: bool = Field(default=False, alias="DB_ECHO")
+    
+    # Connection retry settings
+    MAX_RETRIES: int = Field(default=3, alias="DB_MAX_RETRIES")
+    RETRY_DELAY: int = Field(default=2, alias="DB_RETRY_DELAY")
 
 
 database_settings = DatabaseSettings()
+    
