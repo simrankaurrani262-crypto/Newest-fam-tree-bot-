@@ -10,7 +10,7 @@ alembic==1.13.1
 psycopg2-binary==2.9.9
 
 # Redis & Caching
-redis==4.5.5
+redis==5.0.0
 
 # Task Queue
 celery==5.3.6
