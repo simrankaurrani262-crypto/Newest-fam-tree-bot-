@@ -6,7 +6,7 @@ from typing import Tuple
 
 from aiogram import Bot, Dispatcher
 from aiogram.enums import ParseMode
-from aiogram.fsm.storage.redis import RedisStorage
+from aiogram.fsm.storage.memory import MemoryStorage
 
 from src.config.settings import settings
 from src.config.telegram import telegram_settings
@@ -30,8 +30,8 @@ async def create_bot() -> Tuple[Bot, Dispatcher]:
     bot_info = await bot.get_me()
     logger.info(f"Bot: @{bot_info.username} (ID: {bot_info.id})")
     
-    # Create dispatcher with Redis storage
-    storage = RedisStorage.from_url(settings.REDIS_URL)
+    # Create dispatcher with Memory storage (no Redis needed)
+    storage = MemoryStorage()
     dp = Dispatcher(storage=storage)
     
     # Setup middlewares
@@ -86,3 +86,4 @@ async def start_bot(bot: Bot, dp: Dispatcher):
 
 
 import asyncio
+    
