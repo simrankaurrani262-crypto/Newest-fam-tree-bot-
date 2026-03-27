@@ -65,7 +65,7 @@ async def fourpics_command(message: types.Message, db_user=None):
 @router.message()
 @require_user()
 @handle_errors()
-async def check_guess(message: types.Message, db_user=None):
+async def check_guess(message: types.Message, db_user=None, session=None):
     """Check if message is a game guess"""
     if db_user.id not in active_games:
         return  # No active game
@@ -277,4 +277,4 @@ async def lottery_command(message: types.Message, db_user=None):
             f"❌ Not this time!\n"
             f"💰 Lost: ${amount}\n\n"
             f"Try again later!"
-        )
+)
