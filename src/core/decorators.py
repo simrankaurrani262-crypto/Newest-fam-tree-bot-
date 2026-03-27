@@ -97,39 +97,47 @@ def require_reply(error_message: str = "Please reply to a user message."):
     return decorator
 
 
-def require_admin():
-    """Decorator to require admin privileges"""
-    def decorator(handler: Callable):
-        @functools.wraps(handler)
-        async def wrapper(message: types.Message, *args, **kwargs):
-            # Check if user is admin in chat
-            chat_member = await message.bot.get_chat_member(
-                message.chat.id, 
-                message.from_user.id
-            )
-            
-            if chat_member.status not in ["administrator", "creator"]:
-                return await message.reply(
-                    "❌ <b>Admin Required!</b>\n"
-                    "This command is only for admins."
-                )
-            
-            return await handler(message, *args, **kwargs)
-        return wrapper
-    return decorator
-
-
-def require_group():
+def require_group(error_message: str = "This command can only be used in groups."):
     """Decorator to require command to be used in a group"""
     def decorator(handler: Callable):
         @functools.wraps(handler)
         async def wrapper(message: types.Message, *args, **kwargs):
             if message.chat.type == "private":
-                return await message.reply(
-                    "❌ <b>Group Only!</b>\n"
-                    "This command can only be used in groups."
-                )
+                return await message.reply(f"❌ {error_message}")
             return await handler(message, *args, **kwargs)
+        return wrapper
+    return decorator
+
+
+def require_private(error_message: str = "This command can only be used in private chat."):
+    """Decorator to require command to be used in private chat"""
+    def decorator(handler: Callable):
+        @functools.wraps(handler)
+        async def wrapper(message: types.Message, *args, **kwargs):
+            if message.chat.type != "private":
+                return await message.reply(f"❌ {error_message}")
+            return await handler(message, *args, **kwargs)
+        return wrapper
+    return decorator
+
+
+def handle_errors():
+    """Decorator to handle common exceptions"""
+    def decorator(handler: Callable):
+        @functools.wraps(handler)
+        async def wrapper(message: types.Message, *args, **kwargs):
+            try:
+                return await handler(message, *args, **kwargs)
+            except ValidationError as e:
+                await message.reply(f"❌ {e.message}")
+            except FamTreeBotException as e:
+                await message.reply(f"❌ {str(e)}")
+            except TelegramAPIError as e:
+                logger.error(f"Telegram API error: {e}")
+                await message.reply("❌ An error occurred. Please try again later.")
+            except Exception as e:
+                logger.exception(f"Unexpected error in handler: {e}")
+                await message.reply("❌ An unexpected error occurred. Our team has been notified.")
         return wrapper
     return decorator
 
@@ -140,22 +148,60 @@ def log_command():
         @functools.wraps(handler)
         async def wrapper(message: types.Message, *args, **kwargs):
             logger.info(
-                f"Command '{message.text}' used by "
-                f"user={message.from_user.id} "
-                f"chat={message.chat.id}"
+                f"Command: {message.text} | "
+                f"User: {message.from_user.id} (@{message.from_user.username}) | "
+                f"Chat: {message.chat.id} ({message.chat.type})"
             )
             return await handler(message, *args, **kwargs)
         return wrapper
     return decorator
 
 
+def admin_required():
+    """Decorator to require admin privileges"""
+    def decorator(handler: Callable):
+        @functools.wraps(handler)
+        async def wrapper(message: types.Message, *args, **kwargs):
+            # Check if user is admin in the chat
+            chat_member = await message.bot.get_chat_member(
+                chat_id=message.chat.id,
+                user_id=message.from_user.id
+            )
+            
+            if chat_member.status not in ["administrator", "creator"]:
+                return await message.reply(
+                    "❌ <b>Admin Required!</b>\n"
+                    "This command can only be used by chat administrators."
+                )
+            
+            return await handler(message, *args, **kwargs)
+        return wrapper
+    return decorator
+
+
+def owner_required():
+    """Decorator to require bot owner privileges"""
+    def decorator(handler: Callable):
+        @functools.wraps(handler)
+        async def wrapper(message: types.Message, *args, **kwargs):
+            # Bot owner IDs should be in config
+            from src.config.settings import settings
+            
+            owner_ids = getattr(settings, "BOT_OWNER_IDS", [])
+            
+            if message.from_user.id not in owner_ids:
+                return await message.reply(
+                    "❌ <b>Owner Only!</b>\n"
+                    "This command can only be used by the bot owner."
+                )
+            
+            return await handler(message, *args, **kwargs)
+        return wrapper
+    return decorator
+
+
 def cooldown(seconds: int):
-    """
-    Decorator to add cooldown between command uses per user.
-    
-    Args:
-        seconds: Cooldown duration in seconds
-    """
+    """Decorator to add cooldown between command uses"""
     cooldowns = {}
     
     def decorator(handler: Callable):
@@ -179,4 +225,3 @@ def cooldown(seconds: int):
             return await handler(message, *args, **kwargs)
         return wrapper
     return decorator
-                    
