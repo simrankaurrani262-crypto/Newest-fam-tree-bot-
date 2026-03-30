@@ -187,7 +187,3 @@ This project is licensed under the MIT License - see the [LICENSE](LICENSE) file
 - [Redis](https://redis.io/) - In-memory Data Store
 
 ---
-
-**Made with ❤️ by the Fam Tree Bot Team**
-
-*Alpha: @fam_tree_bot | Beta: @famtreebbot*
