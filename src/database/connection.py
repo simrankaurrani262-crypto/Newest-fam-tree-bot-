@@ -3,6 +3,7 @@ Database Connection Management
 """
 import logging
 import asyncio
+import ssl
 from typing import AsyncGenerator, Optional
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
@@ -62,14 +63,19 @@ def get_engine_kwargs():
     
     db_url = get_database_url()
     
-    # For Render PostgreSQL, we need to handle SSL
-    if "render.com" in db_url:
-        # Render PostgreSQL requires SSL
+    # For Render PostgreSQL or any external PostgreSQL, we need to handle SSL
+    if "render.com" in db_url or "ssl=require" in db_url:
+        # Create SSL context that allows connections without certificate verification
+        # This is needed for Render PostgreSQL and other managed PostgreSQL services
+        ssl_context = ssl.create_default_context()
+        ssl_context.check_hostname = False
+        ssl_context.verify_mode = ssl.CERT_NONE
+        
         connect_args = {
-            "ssl": "require"
+            "ssl": ssl_context
         }
         kwargs["connect_args"] = connect_args
-        logger.info("Using SSL connection for Render PostgreSQL")
+        logger.info("Using SSL connection for PostgreSQL")
     
     return kwargs
 
