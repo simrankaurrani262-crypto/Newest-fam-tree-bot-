@@ -3,15 +3,14 @@ Database Connection Management
 """
 import logging
 import asyncio
-import ssl
 from typing import AsyncGenerator, Optional
+from urllib.parse import urlparse, parse_qs, urlencode, urlunparse
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
     create_async_engine,
     async_sessionmaker
 )
 from sqlalchemy.orm import declarative_base
-from sqlalchemy.pool import NullPool
 from src.config.settings import settings
 from src.config.database import database_settings
 
@@ -26,7 +25,7 @@ async_session_maker = None
 
 
 def get_database_url() -> str:
-    """Get database URL with validation"""
+    """Get database URL with validation and SSL configuration"""
     db_url = settings.DATABASE_URL
     
     if not db_url:
@@ -48,7 +47,42 @@ def get_database_url() -> str:
         logger.error("   Please set DATABASE_URL or DB_HOST, DB_PORT, DB_NAME, DB_USER, DB_PASSWORD")
         raise ValueError("DATABASE_URL is required but not properly configured")
     
+    # Fix SSL parameters in URL - convert ssl=require to sslmode=require
+    db_url = _fix_ssl_params(db_url)
+    
     return db_url
+
+
+def _fix_ssl_params(db_url: str) -> str:
+    """Fix SSL parameters in database URL for asyncpg compatibility"""
+    # Parse the URL
+    parsed = urlparse(db_url)
+    
+    # Get existing query parameters
+    query_params = parse_qs(parsed.query)
+    
+    # Convert ssl=require to sslmode=require (asyncpg uses sslmode, not ssl)
+    if "ssl" in query_params:
+        ssl_value = query_params.pop("ssl")[0]
+        if ssl_value == "require" and "sslmode" not in query_params:
+            query_params["sslmode"] = ["require"]
+            logger.info("Converted ssl=require to sslmode=require for asyncpg compatibility")
+    
+    # Add sslmode=require for Render/external PostgreSQL if not present
+    if "sslmode" not in query_params:
+        if "render.com" in db_url or "amazonaws.com" in db_url or "supabase.co" in db_url:
+            query_params["sslmode"] = ["require"]
+            logger.info("Added sslmode=require to database URL")
+    
+    # Rebuild query string
+    new_query = urlencode(query_params, doseq=True)
+    
+    # Rebuild URL
+    new_url = urlunparse(
+        (parsed.scheme, parsed.netloc, parsed.path, parsed.params, new_query, parsed.fragment)
+    )
+    
+    return new_url
 
 
 def get_engine_kwargs():
@@ -60,22 +94,6 @@ def get_engine_kwargs():
         "pool_timeout": database_settings.POOL_TIMEOUT,
         "pool_recycle": database_settings.POOL_RECYCLE,
     }
-    
-    db_url = get_database_url()
-    
-    # For Render PostgreSQL or any external PostgreSQL, we need to handle SSL
-    if "render.com" in db_url or "ssl=require" in db_url:
-        # Create SSL context that allows connections without certificate verification
-        # This is needed for Render PostgreSQL and other managed PostgreSQL services
-        ssl_context = ssl.create_default_context()
-        ssl_context.check_hostname = False
-        ssl_context.verify_mode = ssl.CERT_NONE
-        
-        connect_args = {
-            "ssl": ssl_context
-        }
-        kwargs["connect_args"] = connect_args
-        logger.info("Using SSL connection for PostgreSQL")
     
     return kwargs
 
@@ -146,6 +164,7 @@ async def init_database():
                 logger.error("   - Ensure PostgreSQL is running")
                 logger.error("   - Check your DATABASE_URL or DB_* settings")
                 logger.error("   - Verify database credentials are correct")
+                logger.error("   - Check if your IP is whitelisted in Render dashboard")
                 raise
 
 
@@ -188,4 +207,3 @@ async def check_database_health() -> bool:
     except Exception as e:
         logger.error(f"Database health check failed: {e}")
         return False
-    
