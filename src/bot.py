@@ -1,6 +1,7 @@
 """
 Telegram Bot Instance and Setup
 """
+import asyncio
 import logging
 from typing import Tuple
 
@@ -13,12 +14,24 @@ from src.config.telegram import telegram_settings
 from src.handlers.router import setup_routers
 from src.middlewares import setup_middlewares
 from src.core.state_machine import state_manager
+from src.core.rate_limiter import rate_limiter
 
 logger = logging.getLogger(__name__)
 
 
 async def create_bot() -> Tuple[Bot, Dispatcher]:
     """Create and configure bot instance"""
+    
+    # Validate BOT_TOKEN
+    if not telegram_settings.BOT_TOKEN:
+        logger.error("❌ BOT_TOKEN is not set! Please set the BOT_TOKEN environment variable.")
+        logger.error("   You can get a bot token from @BotFather on Telegram.")
+        raise ValueError("BOT_TOKEN is required but not set")
+    
+    # Initialize Redis-dependent components
+    logger.info("Initializing Redis-dependent components...")
+    await state_manager.init()
+    await rate_limiter.init()
     
     # Create bot
     bot = Bot(
@@ -27,8 +40,13 @@ async def create_bot() -> Tuple[Bot, Dispatcher]:
     )
     
     # Get bot info
-    bot_info = await bot.get_me()
-    logger.info(f"Bot: @{bot_info.username} (ID: {bot_info.id})")
+    try:
+        bot_info = await bot.get_me()
+        logger.info(f"Bot: @{bot_info.username} (ID: {bot_info.id})")
+    except Exception as e:
+        logger.error(f"Failed to get bot info: {e}")
+        logger.error("Please check if your BOT_TOKEN is valid.")
+        raise
     
     # Create dispatcher with Memory storage (no Redis needed)
     storage = MemoryStorage()
@@ -83,7 +101,4 @@ async def start_bot(bot: Bot, dp: Dispatcher):
         logger.info("Starting in polling mode...")
         await bot.delete_webhook(drop_pending_updates=True)
         await dp.start_polling(bot)
-
-
-import asyncio
     
