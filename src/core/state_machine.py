@@ -34,18 +34,26 @@ class StateManager:
         self.redis: Optional[aioredis.Redis] = None
         self._local_states: Dict[int, Dict[str, Any]] = {}
         self.state_timeout = 300  # 5 minutes
+        self._initialized = False
     
     async def init(self):
         """Initialize Redis connection"""
+        if self._initialized:
+            return
+            
         try:
             self.redis = await aioredis.from_url(
                 settings.REDIS_URL,
                 decode_responses=True
             )
+            # Test connection
+            await self.redis.ping()
             logger.info("StateManager: Redis connected")
         except Exception as e:
             logger.warning(f"StateManager: Redis connection failed, using local storage: {e}")
             self.redis = None
+        
+        self._initialized = True
     
     def _get_key(self, user_id: int) -> str:
         """Generate Redis key for user state"""
@@ -67,6 +75,9 @@ class StateManager:
             data: Optional state data
             timeout: State timeout in seconds (default: 300)
         """
+        if not self._initialized:
+            await self.init()
+            
         timeout = timeout or self.state_timeout
         
         state_data = {
@@ -76,12 +87,17 @@ class StateManager:
         }
         
         if self.redis:
-            key = self._get_key(user_id)
-            await self.redis.setex(
-                key,
-                timeout,
-                str(state_data)
-            )
+            try:
+                key = self._get_key(user_id)
+                await self.redis.setex(
+                    key,
+                    timeout,
+                    str(state_data)
+                )
+            except Exception as e:
+                logger.error(f"Redis error in set_state: {e}")
+                # Fallback to local storage
+                self._local_states[user_id] = state_data
         else:
             self._local_states[user_id] = state_data
         
@@ -97,23 +113,38 @@ class StateManager:
         Returns:
             State data or None if no state
         """
+        if not self._initialized:
+            await self.init()
+            
         if self.redis:
-            key = self._get_key(user_id)
-            data = await self.redis.get(key)
-            if data:
-                import ast
-                return ast.literal_eval(data)
-            return None
+            try:
+                key = self._get_key(user_id)
+                data = await self.redis.get(key)
+                if data:
+                    import ast
+                    return ast.literal_eval(data)
+                return None
+            except Exception as e:
+                logger.error(f"Redis error in get_state: {e}")
+                # Fallback to local storage
+                return self._local_states.get(user_id)
         else:
             return self._local_states.get(user_id)
     
     async def clear_state(self, user_id: int):
         """Clear user state"""
+        if not self._initialized:
+            await self.init()
+            
         if self.redis:
-            key = self._get_key(user_id)
-            await self.redis.delete(key)
-        else:
-            self._local_states.pop(user_id, None)
+            try:
+                key = self._get_key(user_id)
+                await self.redis.delete(key)
+            except Exception as e:
+                logger.error(f"Redis error in clear_state: {e}")
+        
+        # Always clear local storage
+        self._local_states.pop(user_id, None)
         
         logger.debug(f"Cleared state for user {user_id}")
     
